@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package protocol;
+
+//import "google/protobuf/wrappers.proto";
+import "google/protobuf/empty.proto";
+
+// 心跳请求
+message HeartBeatReq {
+    uint32 id = 1;
+}
+
+service Ha {
+    // 心跳包
+    rpc HeartBeat (HeartBeatReq) returns (google.protobuf.Empty);
+}
