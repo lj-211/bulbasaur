@@ -102,6 +102,10 @@ github.com/lj-211/grpcwrapper v0.0.0-20190628064348-a2069f93d418 h1:5faGjqp2lTiE
 github.com/lj-211/grpcwrapper v0.0.0-20190628064348-a2069f93d418/go.mod h1:occyem/rq8TCra4+LWpDzU32EliKDlhDeh8aiYvsyrY=
 github.com/lj-211/grpcwrapper v0.0.0-20190629012636-9d86855d3f6c h1:ze/xxqANbwxMJjTqx23JAHGPMjePrUtQo39XLFAZ8eY=
 github.com/lj-211/grpcwrapper v0.0.0-20190629012636-9d86855d3f6c/go.mod h1:occyem/rq8TCra4+LWpDzU32EliKDlhDeh8aiYvsyrY=
+github.com/lj-211/grpcwrapper v0.0.0-20190629021334-48b44a0ad3b1 h1:wpn1IZ34dpWhfkJIOKbilP9D4WA7M5kQD3UPUpvx3bk=
+github.com/lj-211/grpcwrapper v0.0.0-20190629021334-48b44a0ad3b1/go.mod h1:occyem/rq8TCra4+LWpDzU32EliKDlhDeh8aiYvsyrY=
+github.com/lj-211/grpcwrapper v0.0.0-20190629021451-eec79465e703 h1:mEAaSVnjlW217k/tjv3/3JVjdck3AIdbJP+wlg2M/uw=
+github.com/lj-211/grpcwrapper v0.0.0-20190629021451-eec79465e703/go.mod h1:occyem/rq8TCra4+LWpDzU32EliKDlhDeh8aiYvsyrY=
 github.com/mattn/go-sqlite3 v1.10.0/go.mod h1:FPy6KqzDD04eiIsT53CuJW3U88zkxoIYsOqkbpncsNc=
 github.com/matttproud/golang_protobuf_extensions v1.0.1/go.mod h1:D8He9yQNgCq6Z5Ld7szi9bcBfOoFv/3dc6xSMkL2PC0=
 github.com/mitchellh/colorstring v0.0.0-20190213212951-d06e56a500db/go.mod h1:l0dey0ia/Uv7NcFFVbCLtqEBQbrT4OCwCSKTEv6enCw=

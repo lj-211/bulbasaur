@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/lj-211/common/ecode"
 	"github.com/lj-211/grpcwrapper"
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
@@ -46,7 +47,11 @@ func connectServer(addr string) error {
 				Id: 2,
 			})
 			if cerr != nil {
-				fmt.Println("CLI-心跳发生错误: ", cerr.Error())
+				if ec, ok := ecode.Cause(cerr).(ecode.Codes); ok {
+					fmt.Println("CLI-心跳返回标准错误码: ", ec.Code(), ec.Message())
+				} else {
+					fmt.Println("CLI-心跳发生错误: ", cerr.Error())
+				}
 			}
 			time.Sleep(time.Second * 3)
 		}

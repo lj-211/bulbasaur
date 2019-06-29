@@ -5,7 +5,8 @@ go 1.12
 require (
 	github.com/golang/protobuf v1.3.1
 	github.com/jinzhu/inflection v0.0.0-20190603042836-f5c5f50e6090 // indirect
-	github.com/lj-211/grpcwrapper v0.0.0-20190629012636-9d86855d3f6c
+	github.com/lj-211/common v0.0.0-20190603012151-e5d656db521e
+	github.com/lj-211/grpcwrapper v0.0.0-20190629021451-eec79465e703
 	github.com/pkg/errors v0.8.1
 	golang.org/x/crypto v0.0.0-20190605123033-f99c8df09eb5 // indirect
 	golang.org/x/net v0.0.0-20190603091049-60506f45cf65 // indirect
