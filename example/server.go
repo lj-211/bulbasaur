@@ -41,7 +41,7 @@ func connectServer(addr string) error {
 
 	go func() {
 		for {
-			res, cerr := haClient.HeartBeat(context.Background(), &pb.HeartBeatReq{
+			_, cerr := haClient.HeartBeat(context.Background(), &pb.HeartBeatReq{
 				Id: 2,
 			})
 			if cerr != nil {
