@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"flag"
 	"fmt"
 	"time"
 
@@ -54,13 +55,34 @@ func connectServer(addr string) error {
 	return nil
 }
 
-const serverAddr string = "0.0.0.0:8000"
-const selfAddr string = "0.0.0.0:8000"
+var serverAddr string
+var selfAddr string
+
+func paramParse() error {
+	flag.StringVar(&serverAddr, "remote", "", "远端地址")
+	flag.StringVar(&selfAddr, "local", "", "本地监听地址")
+
+	flag.Parse()
+
+	if selfAddr == "" {
+		return errors.New("本地监听地址未设置")
+	}
+
+	if serverAddr == "" {
+		return errors.New("伙伴地址至少需要设定一个")
+	}
+
+	return nil
+}
 
 func main() {
 	fmt.Println("start running...")
 	var exitErr error
 	for ok := true; ok; ok = false {
+		if err := paramParse(); err != nil {
+			exitErr = errors.Wrap(err, "启动参数设定非法")
+			break
+		}
 		if err := startServer(selfAddr); err != nil {
 			exitErr = errors.Wrap(err, "启动服务失败")
 			break
