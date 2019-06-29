@@ -46,7 +46,7 @@ func connectServer(addr string) error {
 				Id: 2,
 			})
 			if cerr != nil {
-				fmt.Println("心跳发生错误: ", cerr.Error())
+				fmt.Println("CLI-心跳发生错误: ", cerr.Error())
 			}
 			time.Sleep(time.Second * 3)
 		}
