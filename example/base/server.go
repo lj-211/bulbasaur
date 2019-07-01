@@ -12,7 +12,7 @@ import (
 	"google.golang.org/grpc"
 
 	"github.com/lj-211/bulbasaur"
-	example "github.com/lj-211/bulbasaur/example"
+	common "github.com/lj-211/bulbasaur/example"
 	pb "github.com/lj-211/bulbasaur/protocol"
 )
 
@@ -89,6 +89,12 @@ func main() {
 			exitErr = errors.Wrap(err, "启动参数设定非法")
 			break
 		}
+		if err := common.InitGoLoggingStdout("base"); err != nil {
+			exitErr = errors.Wrap(err, "初始化stdout日志失败")
+			break
+		}
+		common.Log.Info("日志初始化成功")
+
 		if err := startServer(selfAddr); err != nil {
 			exitErr = errors.Wrap(err, "启动服务失败")
 			break

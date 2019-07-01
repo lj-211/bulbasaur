@@ -4,6 +4,7 @@ import (
 	"os"
 
 	gologging "github.com/op/go-logging"
+	"github.com/pkg/errors"
 )
 
 var Log Logger = Logger{}
@@ -60,17 +61,37 @@ func (l Logger) Errorf(format string, args ...interface{}) {
 	}
 }
 
-const logFormat string = gologging.MustStringFormatter("%{level}: [%{time:2006-01-02 15:04:05.000}][%{pid}][grt_id:%{goroutineid}][grt_count:%{goroutinecount}][%{module}][%{shortfile}][%{message}]")
+const logFormat string = "%{level}: [%{time:2006-01-02 15:04:05.000}][%{pid}][grt_id:%{goroutineid}][grt_count:%{goroutinecount}][%{module}][%{shortfile}][%{message}]"
 
-func initGoLogging(name string, fpath string, fname string) error {
-	backend := gologging.NewLogBackend(os.Stdout, "", 0)
-
+func InitGoLogging(name string, fpath string, fname string) error {
 	log_fp, err := os.OpenFile(fpath+"/"+fname, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
 	if err != nil {
 		return errors.Wrap(err, "打开文件失败")
 	}
+	err = initGoLogging(name, log_fp)
+	if err != nil {
+		return errors.Wrap(err, "初始化日志失败")
+	}
 
-	backend := gologging.NewLogBackend(info_log_fp, "", 0)
+	return nil
+}
+
+func InitGoLoggingStdout(name string) error {
+	err := initGoLogging(name, os.Stdout)
+	if err != nil {
+		return errors.Wrap(err, "初始化日志失败")
+	}
+
+	return nil
+}
+
+func initGoLogging(name string, fd *os.File) error {
+	if fd == nil {
+		return errors.New("无效的日志文件句柄")
+	}
+
+	backend := gologging.NewLogBackend(fd, "", 0)
+	format := gologging.MustStringFormatter(logFormat)
 	formatter := gologging.NewBackendFormatter(backend, format)
 	level := gologging.AddModuleLevel(formatter)
 	level.SetLevel(gologging.INFO, "")
