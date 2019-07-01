@@ -12,6 +12,7 @@ import (
 	"google.golang.org/grpc"
 
 	"github.com/lj-211/bulbasaur"
+	example "github.com/lj-211/bulbasaur/example"
 	pb "github.com/lj-211/bulbasaur/protocol"
 )
 
