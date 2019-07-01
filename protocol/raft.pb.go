@@ -25,9 +25,86 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.ProtoPackageIsVersion3 // please upgrade the proto package
 
+// entity
+type Role int32
+
+const (
+	Role_Candidate Role = 0
+	Role_Follower  Role = 1
+	Role_Leader    Role = 2
+)
+
+var Role_name = map[int32]string{
+	0: "Candidate",
+	1: "Follower",
+	2: "Leader",
+}
+
+var Role_value = map[string]int32{
+	"Candidate": 0,
+	"Follower":  1,
+	"Leader":    2,
+}
+
+func (x Role) String() string {
+	return proto.EnumName(Role_name, int32(x))
+}
+
+func (Role) EnumDescriptor() ([]byte, []int) {
+	return fileDescriptor_b042552c306ae59b, []int{0}
+}
+
+type NodeInfo struct {
+	Id                   uint32   `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	Addr                 string   `protobuf:"bytes,2,opt,name=addr,proto3" json:"addr,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *NodeInfo) Reset()         { *m = NodeInfo{} }
+func (m *NodeInfo) String() string { return proto.CompactTextString(m) }
+func (*NodeInfo) ProtoMessage()    {}
+func (*NodeInfo) Descriptor() ([]byte, []int) {
+	return fileDescriptor_b042552c306ae59b, []int{0}
+}
+
+func (m *NodeInfo) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_NodeInfo.Unmarshal(m, b)
+}
+func (m *NodeInfo) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_NodeInfo.Marshal(b, m, deterministic)
+}
+func (m *NodeInfo) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_NodeInfo.Merge(m, src)
+}
+func (m *NodeInfo) XXX_Size() int {
+	return xxx_messageInfo_NodeInfo.Size(m)
+}
+func (m *NodeInfo) XXX_DiscardUnknown() {
+	xxx_messageInfo_NodeInfo.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_NodeInfo proto.InternalMessageInfo
+
+func (m *NodeInfo) GetId() uint32 {
+	if m != nil {
+		return m.Id
+	}
+	return 0
+}
+
+func (m *NodeInfo) GetAddr() string {
+	if m != nil {
+		return m.Addr
+	}
+	return ""
+}
+
 // 心跳请求
 type HeartBeatReq struct {
 	Id                   uint32   `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	Addr                 string   `protobuf:"bytes,2,opt,name=addr,proto3" json:"addr,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -37,7 +114,7 @@ func (m *HeartBeatReq) Reset()         { *m = HeartBeatReq{} }
 func (m *HeartBeatReq) String() string { return proto.CompactTextString(m) }
 func (*HeartBeatReq) ProtoMessage()    {}
 func (*HeartBeatReq) Descriptor() ([]byte, []int) {
-	return fileDescriptor_b042552c306ae59b, []int{0}
+	return fileDescriptor_b042552c306ae59b, []int{1}
 }
 
 func (m *HeartBeatReq) XXX_Unmarshal(b []byte) error {
@@ -65,23 +142,111 @@ func (m *HeartBeatReq) GetId() uint32 {
 	return 0
 }
 
+func (m *HeartBeatReq) GetAddr() string {
+	if m != nil {
+		return m.Addr
+	}
+	return ""
+}
+
+type GetNodeListReq struct {
+	Id                   uint32   `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *GetNodeListReq) Reset()         { *m = GetNodeListReq{} }
+func (m *GetNodeListReq) String() string { return proto.CompactTextString(m) }
+func (*GetNodeListReq) ProtoMessage()    {}
+func (*GetNodeListReq) Descriptor() ([]byte, []int) {
+	return fileDescriptor_b042552c306ae59b, []int{2}
+}
+
+func (m *GetNodeListReq) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_GetNodeListReq.Unmarshal(m, b)
+}
+func (m *GetNodeListReq) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_GetNodeListReq.Marshal(b, m, deterministic)
+}
+func (m *GetNodeListReq) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_GetNodeListReq.Merge(m, src)
+}
+func (m *GetNodeListReq) XXX_Size() int {
+	return xxx_messageInfo_GetNodeListReq.Size(m)
+}
+func (m *GetNodeListReq) XXX_DiscardUnknown() {
+	xxx_messageInfo_GetNodeListReq.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_GetNodeListReq proto.InternalMessageInfo
+
+func (m *GetNodeListReq) GetId() uint32 {
+	if m != nil {
+		return m.Id
+	}
+	return 0
+}
+
+type GetNodeListRes struct {
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *GetNodeListRes) Reset()         { *m = GetNodeListRes{} }
+func (m *GetNodeListRes) String() string { return proto.CompactTextString(m) }
+func (*GetNodeListRes) ProtoMessage()    {}
+func (*GetNodeListRes) Descriptor() ([]byte, []int) {
+	return fileDescriptor_b042552c306ae59b, []int{3}
+}
+
+func (m *GetNodeListRes) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_GetNodeListRes.Unmarshal(m, b)
+}
+func (m *GetNodeListRes) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_GetNodeListRes.Marshal(b, m, deterministic)
+}
+func (m *GetNodeListRes) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_GetNodeListRes.Merge(m, src)
+}
+func (m *GetNodeListRes) XXX_Size() int {
+	return xxx_messageInfo_GetNodeListRes.Size(m)
+}
+func (m *GetNodeListRes) XXX_DiscardUnknown() {
+	xxx_messageInfo_GetNodeListRes.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_GetNodeListRes proto.InternalMessageInfo
+
 func init() {
+	proto.RegisterEnum("protocol.Role", Role_name, Role_value)
+	proto.RegisterType((*NodeInfo)(nil), "protocol.NodeInfo")
 	proto.RegisterType((*HeartBeatReq)(nil), "protocol.HeartBeatReq")
+	proto.RegisterType((*GetNodeListReq)(nil), "protocol.GetNodeListReq")
+	proto.RegisterType((*GetNodeListRes)(nil), "protocol.GetNodeListRes")
 }
 
 func init() { proto.RegisterFile("raft.proto", fileDescriptor_b042552c306ae59b) }
 
 var fileDescriptor_b042552c306ae59b = []byte{
-	// 134 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0xe2, 0x2a, 0x4a, 0x4c, 0x2b,
-	0xd1, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0xe2, 0x00, 0x53, 0xc9, 0xf9, 0x39, 0x52, 0xd2, 0xe9,
-	0xf9, 0xf9, 0xe9, 0x39, 0xa9, 0xfa, 0x60, 0x81, 0xa4, 0xd2, 0x34, 0xfd, 0xd4, 0xdc, 0x82, 0x92,
-	0x4a, 0x88, 0x32, 0x25, 0x39, 0x2e, 0x1e, 0x8f, 0xd4, 0xc4, 0xa2, 0x12, 0xa7, 0xd4, 0xc4, 0x92,
-	0xa0, 0xd4, 0x42, 0x21, 0x3e, 0x2e, 0xa6, 0xcc, 0x14, 0x09, 0x46, 0x05, 0x46, 0x0d, 0xde, 0x20,
-	0xa6, 0xcc, 0x14, 0x23, 0x47, 0x2e, 0x26, 0x8f, 0x44, 0x21, 0x6b, 0x2e, 0x4e, 0xb8, 0x2a, 0x21,
-	0x31, 0x3d, 0x98, 0xd1, 0x7a, 0xc8, 0x5a, 0xa5, 0xc4, 0xf4, 0x20, 0x16, 0xe9, 0xc1, 0x2c, 0xd2,
-	0x73, 0x05, 0x59, 0x94, 0xc4, 0x06, 0xe6, 0x1b, 0x03, 0x02, 0x00, 0x00, 0xff, 0xff, 0x49, 0xef,
-	0x1a, 0x59, 0x9e, 0x00, 0x00, 0x00,
+	// 246 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x8c, 0x90, 0x41, 0x4b, 0xc3, 0x40,
+	0x10, 0x85, 0xdd, 0xa5, 0x94, 0x64, 0x6c, 0x4b, 0x98, 0x43, 0x09, 0xf1, 0x12, 0x72, 0x2a, 0x1e,
+	0x36, 0x50, 0x8f, 0x9e, 0x54, 0xd4, 0x0a, 0xc5, 0x43, 0xfe, 0xc1, 0xd6, 0x99, 0x94, 0xc0, 0xda,
+	0xa9, 0x9b, 0x15, 0xf1, 0xee, 0x0f, 0x97, 0xa6, 0x54, 0xa3, 0x28, 0xf4, 0xb4, 0xcb, 0xbe, 0xf7,
+	0xd8, 0x8f, 0x0f, 0xc0, 0xdb, 0x3a, 0x98, 0xad, 0x97, 0x20, 0x18, 0x75, 0xc7, 0x93, 0xb8, 0xec,
+	0x6c, 0x2d, 0xb2, 0x76, 0x5c, 0x76, 0x0f, 0xab, 0xd7, 0xba, 0xe4, 0xe7, 0x6d, 0x78, 0xdf, 0xd7,
+	0x0a, 0x03, 0xd1, 0xa3, 0x10, 0x3f, 0x6c, 0x6a, 0xc1, 0x09, 0xe8, 0x86, 0x52, 0x95, 0xab, 0xd9,
+	0xb8, 0xd2, 0x0d, 0x21, 0xc2, 0xc0, 0x12, 0xf9, 0x54, 0xe7, 0x6a, 0x16, 0x57, 0xdd, 0xbd, 0x98,
+	0xc3, 0x68, 0xc1, 0xd6, 0x87, 0x6b, 0xb6, 0xa1, 0xe2, 0x97, 0xa3, 0x36, 0x39, 0x4c, 0xee, 0x39,
+	0xec, 0xbe, 0x59, 0x36, 0xed, 0x5f, 0xab, 0x22, 0xf9, 0xd5, 0x68, 0xcf, 0x4b, 0x18, 0x54, 0xe2,
+	0x18, 0xc7, 0x10, 0xdf, 0xd8, 0x0d, 0x35, 0x64, 0x03, 0x27, 0x27, 0x38, 0x82, 0xe8, 0x4e, 0x9c,
+	0x93, 0x37, 0xf6, 0x89, 0x42, 0x80, 0xe1, 0x92, 0x2d, 0xb1, 0x4f, 0xf4, 0xfc, 0x43, 0x81, 0x5e,
+	0x58, 0xbc, 0x84, 0xf8, 0x8b, 0x0f, 0xa7, 0xe6, 0x20, 0xc1, 0xf4, 0xa1, 0xb3, 0xa9, 0xd9, 0x2b,
+	0x31, 0x07, 0x25, 0xe6, 0x76, 0xa7, 0x04, 0xaf, 0xe0, 0xb4, 0x87, 0x81, 0xe9, 0xf7, 0xfc, 0x27,
+	0x7f, 0xf6, 0x5f, 0xd2, 0xae, 0x86, 0x5d, 0x70, 0xf1, 0x19, 0x00, 0x00, 0xff, 0xff, 0xda, 0x41,
+	0x08, 0x2c, 0x8b, 0x01, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -98,6 +263,8 @@ const _ = grpc.SupportPackageIsVersion4
 type HaClient interface {
 	// 心跳包
 	HeartBeat(ctx context.Context, in *HeartBeatReq, opts ...grpc.CallOption) (*empty.Empty, error)
+	// 获取节点信息
+	GetNodeList(ctx context.Context, in *GetNodeListReq, opts ...grpc.CallOption) (*GetNodeListRes, error)
 }
 
 type haClient struct {
@@ -117,10 +284,21 @@ func (c *haClient) HeartBeat(ctx context.Context, in *HeartBeatReq, opts ...grpc
 	return out, nil
 }
 
+func (c *haClient) GetNodeList(ctx context.Context, in *GetNodeListReq, opts ...grpc.CallOption) (*GetNodeListRes, error) {
+	out := new(GetNodeListRes)
+	err := c.cc.Invoke(ctx, "/protocol.Ha/GetNodeList", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // HaServer is the server API for Ha service.
 type HaServer interface {
 	// 心跳包
 	HeartBeat(context.Context, *HeartBeatReq) (*empty.Empty, error)
+	// 获取节点信息
+	GetNodeList(context.Context, *GetNodeListReq) (*GetNodeListRes, error)
 }
 
 // UnimplementedHaServer can be embedded to have forward compatible implementations.
@@ -129,6 +307,9 @@ type UnimplementedHaServer struct {
 
 func (*UnimplementedHaServer) HeartBeat(ctx context.Context, req *HeartBeatReq) (*empty.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method HeartBeat not implemented")
+}
+func (*UnimplementedHaServer) GetNodeList(ctx context.Context, req *GetNodeListReq) (*GetNodeListRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetNodeList not implemented")
 }
 
 func RegisterHaServer(s *grpc.Server, srv HaServer) {
@@ -153,6 +334,24 @@ func _Ha_HeartBeat_Handler(srv interface{}, ctx context.Context, dec func(interf
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Ha_GetNodeList_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetNodeListReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(HaServer).GetNodeList(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/protocol.Ha/GetNodeList",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(HaServer).GetNodeList(ctx, req.(*GetNodeListReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var _Ha_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "protocol.Ha",
 	HandlerType: (*HaServer)(nil),
@@ -160,6 +359,10 @@ var _Ha_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "HeartBeat",
 			Handler:    _Ha_HeartBeat_Handler,
+		},
+		{
+			MethodName: "GetNodeList",
+			Handler:    _Ha_GetNodeList_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

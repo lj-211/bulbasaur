@@ -5,12 +5,35 @@ package protocol;
 //import "google/protobuf/wrappers.proto";
 import "google/protobuf/empty.proto";
 
+// entity
+enum Role {
+    Candidate   = 0;
+    Follower    = 1;
+    Leader      = 2;
+}
+
+message NodeInfo {
+    uint32 id   = 1;
+    string addr = 2;
+}
+
 // 心跳请求
 message HeartBeatReq {
-    uint32 id = 1;
+    uint32  id   = 1;
+    string  addr = 2;
+    int32   role = 3;
+}
+
+message GetNodeListReq {
+    uint32  id = 1;
+}
+
+message GetNodeListRes {
 }
 
 service Ha {
     // 心跳包
     rpc HeartBeat (HeartBeatReq) returns (google.protobuf.Empty);
+    // 获取节点信息
+    rpc GetNodeList(GetNodeListReq) returns (GetNodeListRes);
 }
