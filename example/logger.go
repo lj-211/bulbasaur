@@ -60,8 +60,10 @@ func (l Logger) Errorf(format string, args ...interface{}) {
 		l.Logger.Errorf(format, args)
 	}
 }
+func (l Logger) SetLevel(lv int) {}
+func (l Logger) GetLevel() int   { return 0 }
 
-const logFormat string = "%{level}: [%{time:2006-01-02 15:04:05.000}][%{pid}][grt_id:%{goroutineid}][grt_count:%{goroutinecount}][%{module}][%{shortfile}][%{message}]"
+const logFormat string = "%{level}: [%{time:2006-01-02 15:04:05.000}][%{pid}][%{module}][%{shortfile}] - %{message}"
 
 func InitGoLogging(name string, fpath string, fname string) error {
 	log_fp, err := os.OpenFile(fpath+"/"+fname, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)

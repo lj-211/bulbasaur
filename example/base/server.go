@@ -49,9 +49,9 @@ func connectServer(addr string) error {
 			})
 			if cerr != nil {
 				if ec, ok := ecode.Cause(cerr).(ecode.Codes); ok {
-					fmt.Println("CLI-心跳返回标准错误码: ", ec.Code(), ec.Message())
+					common.Log.Info("CLI-心跳返回标准错误码: ", ec.Code(), ec.Message())
 				} else {
-					fmt.Println("CLI-心跳发生错误: ", cerr.Error())
+					common.Log.Info("CLI-心跳发生错误: ", cerr.Error())
 				}
 			}
 			time.Sleep(time.Second * 3)
@@ -93,6 +93,7 @@ func main() {
 			exitErr = errors.Wrap(err, "初始化stdout日志失败")
 			break
 		}
+		bulbasaur.Logger.Log = common.Log
 		common.Log.Info("日志初始化成功")
 
 		if err := startServer(selfAddr); err != nil {
