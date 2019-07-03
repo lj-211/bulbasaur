@@ -23,6 +23,11 @@ func _registProto(e *grpcwrapper.Engine) {
 func _registMiddleware(e *grpcwrapper.Engine) {
 }
 
+func initSelfNodeInfo() {
+	bulbasaur.Info.Addr = selfAddr
+	bulbasaur.Info.Role = pb.Role_Leader
+}
+
 func startServer(addr string) error {
 	engine := grpcwrapper.Default()
 	_registMiddleware(engine)
@@ -42,6 +47,21 @@ func connectServer(addr string) error {
 	}
 	haClient := pb.NewHaClient(client)
 
+	for {
+		_, err := haClient.Register(context.Background(), &pb.RegisterReq{
+			Id:   uint64(bulbasaur.Info.NodeId),
+			Addr: bulbasaur.Info.Addr,
+		})
+		if err != nil {
+			common.Log.Info("连接远端成功")
+		}
+
+		time.Sleep(time.Second)
+
+		break
+	}
+
+	common.Log.Infof("开始和%s心跳", addr)
 	go func() {
 		for {
 			_, cerr := haClient.HeartBeat(context.Background(), &pb.HeartBeatReq{
@@ -63,10 +83,12 @@ func connectServer(addr string) error {
 
 var serverAddr string
 var selfAddr string
+var nodeId uint
 
 func paramParse() error {
 	flag.StringVar(&serverAddr, "remote", "", "远端地址")
 	flag.StringVar(&selfAddr, "local", "", "本地监听地址")
+	flag.UintVar(&nodeId, "id", 0, "节点id(大于0)")
 
 	flag.Parse()
 
@@ -78,6 +100,10 @@ func paramParse() error {
 		return errors.New("伙伴地址至少需要设定一个")
 	}
 
+	if nodeId == 0 {
+		common.Log.Infof("没有设置节点id,将使用系统随机id %d", bulbasaur.Info.NodeId)
+	}
+
 	return nil
 }
 
@@ -85,15 +111,16 @@ func main() {
 	fmt.Println("start running...")
 	var exitErr error
 	for ok := true; ok; ok = false {
-		if err := paramParse(); err != nil {
-			exitErr = errors.Wrap(err, "启动参数设定非法")
-			break
-		}
 		if err := common.InitGoLoggingStdout("base"); err != nil {
 			exitErr = errors.Wrap(err, "初始化stdout日志失败")
 			break
 		}
 		bulbasaur.Logger.Log = common.Log
+
+		if err := paramParse(); err != nil {
+			exitErr = errors.Wrap(err, "启动参数设定非法")
+			break
+		}
 		common.Log.Info("日志初始化成功")
 
 		if err := startServer(selfAddr); err != nil {
