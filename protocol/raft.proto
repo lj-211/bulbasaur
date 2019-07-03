@@ -31,9 +31,19 @@ message GetNodeListReq {
 message GetNodeListRes {
 }
 
+message RegisterReq {
+    uint64 id = 1;
+    string addr = 2;
+}
+
+message RegisterRes {
+}
+
 service Ha {
     // 心跳包
     rpc HeartBeat (HeartBeatReq) returns (google.protobuf.Empty);
     // 获取节点信息
     rpc GetNodeList(GetNodeListReq) returns (GetNodeListRes);
+    // 注册节点
+    rpc Register(RegisterReq) returns (RegisterRes);
 }
