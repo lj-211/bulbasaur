@@ -23,9 +23,11 @@ func _registProto(e *grpcwrapper.Engine) {
 func _registMiddleware(e *grpcwrapper.Engine) {
 }
 
-func initSelfNodeInfo() {
+func initSelfPartnerInfo() {
 	bulbasaur.Info.Addr = selfAddr
-	bulbasaur.Info.Role = pb.Role_Leader
+	if partnerId != 0 {
+		bulbasaur.Info.PartnerId = uint64(partnerId)
+	}
 }
 
 func startServer(addr string) error {
@@ -49,11 +51,13 @@ func connectServer(addr string) error {
 
 	for {
 		_, err := haClient.Register(context.Background(), &pb.RegisterReq{
-			Id:   uint64(bulbasaur.Info.NodeId),
+			Id:   uint64(bulbasaur.Info.PartnerId),
 			Addr: bulbasaur.Info.Addr,
 		})
 		if err != nil {
 			common.Log.Info("连接远端成功")
+			time.Sleep(time.Second * 2)
+			continue
 		}
 
 		time.Sleep(time.Second)
@@ -65,7 +69,7 @@ func connectServer(addr string) error {
 	go func() {
 		for {
 			_, cerr := haClient.HeartBeat(context.Background(), &pb.HeartBeatReq{
-				Id: 2,
+				Id: bulbasaur.Info.PartnerId,
 			})
 			if cerr != nil {
 				if ec, ok := ecode.Cause(cerr).(ecode.Codes); ok {
@@ -83,12 +87,12 @@ func connectServer(addr string) error {
 
 var serverAddr string
 var selfAddr string
-var nodeId uint
+var partnerId uint
 
 func paramParse() error {
 	flag.StringVar(&serverAddr, "remote", "", "远端地址")
 	flag.StringVar(&selfAddr, "local", "", "本地监听地址")
-	flag.UintVar(&nodeId, "id", 0, "节点id(大于0)")
+	flag.UintVar(&partnerId, "id", 0, "节点id(大于0)")
 
 	flag.Parse()
 
@@ -96,12 +100,8 @@ func paramParse() error {
 		return errors.New("本地监听地址未设置")
 	}
 
-	if serverAddr == "" {
-		return errors.New("伙伴地址至少需要设定一个")
-	}
-
-	if nodeId == 0 {
-		common.Log.Infof("没有设置节点id,将使用系统随机id %d", bulbasaur.Info.NodeId)
+	if partnerId == 0 {
+		common.Log.Infof("没有设置节点id,将使用系统随机id %d", bulbasaur.Info.PartnerId)
 	}
 
 	return nil
@@ -128,13 +128,30 @@ func main() {
 			break
 		}
 
-		if err := connectServer(serverAddr); err != nil {
-			exitErr = errors.Wrap(err, "连接服务失败")
-			break
+		initSelfPartnerInfo()
+
+		if serverAddr != "" {
+			if err := connectServer(serverAddr); err != nil {
+				exitErr = errors.Wrap(err, "连接服务失败")
+				break
+			}
+			bulbasaur.Info.Role = pb.Role_Follower
+		} else {
+			bulbasaur.Info.Role = pb.Role_Leader
+			common.Log.Info("作为主节点运行")
 		}
 
 		for {
-			time.Sleep(time.Second * 1)
+			time.Sleep(time.Second * 5)
+			if bulbasaur.Info.Role == pb.Role_Leader {
+				common.Log.Info("partners:  start")
+				bulbasaur.Partners.Range(func(k, v interface{}) bool {
+					pinfo := v.(*bulbasaur.PartnerInfo)
+					common.Log.Infof("partners: %v %+v", k.(uint64), *pinfo)
+					return true
+				})
+				common.Log.Info("partners: end")
+			}
 		}
 	}
 

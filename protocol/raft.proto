@@ -5,6 +5,10 @@ package protocol;
 //import "google/protobuf/wrappers.proto";
 import "google/protobuf/empty.proto";
 
+enum ErrCode {
+    PartnerHasRegistered    = 0;
+}
+
 // entity
 enum Role {
     Candidate   = 0;
@@ -19,7 +23,7 @@ message NodeInfo {
 
 // 心跳请求
 message HeartBeatReq {
-    uint32  id   = 1;
+    uint64  id   = 1;
     string  addr = 2;
     int32   role = 3;
 }
