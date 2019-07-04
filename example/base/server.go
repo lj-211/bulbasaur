@@ -143,6 +143,17 @@ func main() {
 
 		for {
 			time.Sleep(time.Second * 5)
+			switch bulbasaur.Info.Role {
+			case pb.Role_Leader:
+				common.Log.Info("我是Leader")
+			case pb.Role_Follower:
+				common.Log.Info("我是Follower")
+			case pb.Role_Candidate:
+				common.Log.Info("我是Candidate")
+			default:
+				common.Log.Error("角色异常")
+			}
+
 			if bulbasaur.Info.Role == pb.Role_Leader {
 				common.Log.Info("partners:  start")
 				bulbasaur.Partners.Range(func(k, v interface{}) bool {
