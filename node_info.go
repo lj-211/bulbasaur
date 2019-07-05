@@ -20,3 +20,10 @@ var Info *PartnerInfo = &PartnerInfo{
 }
 
 var Partners sync.Map
+
+type PartnerTunnel struct {
+	sync.RWMutex
+	Clients map[uint64]pb.HaClient
+}
+
+var Tunnels PartnerTunnel

@@ -7,6 +7,7 @@ import "google/protobuf/empty.proto";
 
 enum ErrCode {
     PartnerHasRegistered    = 0;
+    ConnectFail             = 1;
 }
 
 // entity

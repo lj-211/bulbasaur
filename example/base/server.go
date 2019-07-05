@@ -28,6 +28,8 @@ func initSelfPartnerInfo() {
 	if partnerId != 0 {
 		bulbasaur.Info.PartnerId = uint64(partnerId)
 	}
+
+	bulbasaur.Tunnels.Clients = make(map[uint64]pb.HaClient)
 }
 
 func startServer(addr string) error {
@@ -49,13 +51,14 @@ func connectServer(addr string) error {
 	}
 	haClient := pb.NewHaClient(client)
 
-	for {
+	for true {
 		_, err := haClient.Register(context.Background(), &pb.RegisterReq{
 			Id:   uint64(bulbasaur.Info.PartnerId),
 			Addr: bulbasaur.Info.Addr,
 		})
 		if err != nil {
-			common.Log.Info("连接远端成功")
+			ec, _ := ecode.Cause(err).(ecode.Codes)
+			common.Log.Info("连接远端发生错误: ", ec.Message())
 			time.Sleep(time.Second * 2)
 			continue
 		}
@@ -66,6 +69,7 @@ func connectServer(addr string) error {
 	}
 
 	common.Log.Infof("开始和%s心跳", addr)
+
 	go func() {
 		for {
 			_, cerr := haClient.HeartBeat(context.Background(), &pb.HeartBeatReq{
