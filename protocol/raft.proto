@@ -17,6 +17,18 @@ enum Role {
     Leader      = 2;
 }
 
+enum Pstatus {
+    Ok          = 0;
+    Connecting  = 1;
+    Lost        = 2;
+}
+
+// common msg
+message Message {
+    uint32 mtype = 1;
+    bytes data = 2;
+}
+
 message NodeInfo {
     uint32 id   = 1;
     string addr = 2;
@@ -51,4 +63,6 @@ service Ha {
     rpc GetNodeList(GetNodeListReq) returns (GetNodeListRes);
     // 注册节点
     rpc Register(RegisterReq) returns (RegisterRes);
+    // 通用双向消息
+    rpc TwoWay(stream Message) returns (stream Message);
 }

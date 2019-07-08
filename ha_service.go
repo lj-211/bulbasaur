@@ -2,8 +2,10 @@ package bulbasaur
 
 import (
 	"context"
+	"io"
 	"time"
 
+	"github.com/golang/protobuf/proto"
 	"github.com/lj-211/common/ecode"
 	"github.com/lj-211/grpcwrapper"
 	"github.com/pkg/errors"
@@ -64,4 +66,47 @@ func (s *HaServer) Register(ctx context.Context, req *pb.RegisterReq) (*pb.Regis
 		common.Log.Info("已和%+v连接成功")
 	}
 	return &pb.RegisterRes{}, nil
+}
+
+func (this *HaServer) TwoWay(stream pb.Ha_TwoWayServer) error {
+	var pid uint64
+	for {
+		msg, err := stream.Recv()
+		if err == io.EOF {
+			common.Log.Info("伙伴连接断开")
+			return nil
+		}
+		if err != nil {
+			return errors.Wrapf(err, "处理双向消息出错")
+		}
+
+		if msg.Mtype == MtypeHeartBeat {
+			hb := &pb.HeartBeatReq{}
+			if err := proto.Unmarshal(msg.Data, hb); err != nil {
+				common.Log.Errorf("解码消息出错: %s", err.Error())
+				continue
+			}
+			pid = hb.Id
+		}
+
+		if perr := processMsg(context.Background(), pid, msg, stream); perr != nil {
+			common.Log.Errorf("处理消息时发生错误: %s", perr.Error())
+		}
+	}
+}
+
+func HeartBeat(ctx context.Context, pid uint64, data []byte, stream grpc.ServerStream) error {
+	hb := &pb.HeartBeatReq{}
+	if err := proto.Unmarshal(data, hb); err != nil {
+		return errors.Wrapf(err, "解码消息出错")
+	}
+
+	common.Log.Infof("伙伴%d发来心跳消息", hb.Id)
+	//stream.Send(msg)
+
+	return nil
+}
+
+func init() {
+	registerMsgProcess(MtypeHeartBeat, HeartBeat)
 }

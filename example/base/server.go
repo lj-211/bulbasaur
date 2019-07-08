@@ -4,8 +4,11 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"io"
+	"strconv"
 	"time"
 
+	"github.com/golang/protobuf/proto"
 	"github.com/lj-211/common/ecode"
 	"github.com/lj-211/grpcwrapper"
 	"github.com/pkg/errors"
@@ -51,7 +54,41 @@ func connectServer(addr string) error {
 	}
 	haClient := pb.NewHaClient(client)
 
-	for true {
+	tw, twErr := haClient.TwoWay(context.Background())
+	if twErr != nil {
+		common.Log.Errorf("创建双向客户端失败: %s", twErr.Error())
+	} else {
+		go func() {
+			for {
+				time.Sleep(time.Second * 2)
+				msg, merr := tw.Recv()
+				if merr == io.EOF {
+					common.Log.Infof("伙伴%d断开连接", 123456)
+					return
+				}
+				if merr != nil {
+					common.Log.Infof("读数据发生错误 %s", merr.Error())
+					break
+				} else {
+					common.Log.Info("收到消息 %s", strconv.FormatUint(uint64(msg.Mtype), 10))
+				}
+
+				bmsg := &pb.HeartBeatReq{
+					Id: bulbasaur.Info.PartnerId,
+				}
+				buf, _ := proto.Marshal(bmsg)
+				tw.Send(&pb.Message{
+					Mtype: bulbasaur.MtypeHeartBeat,
+					Data:  buf,
+				})
+				common.Log.Info("发送心跳消息")
+
+				common.Log.Info("two way client tick")
+			}
+		}()
+	}
+
+	for false {
 		_, err := haClient.Register(context.Background(), &pb.RegisterReq{
 			Id:   uint64(bulbasaur.Info.PartnerId),
 			Addr: bulbasaur.Info.Addr,
