@@ -5,7 +5,6 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"strconv"
 	"time"
 
 	"github.com/golang/protobuf/proto"
@@ -60,18 +59,25 @@ func connectServer(addr string) error {
 	} else {
 		go func() {
 			for {
-				time.Sleep(time.Second * 2)
+				common.Log.Info("two way client tick")
 				msg, merr := tw.Recv()
 				if merr == io.EOF {
 					common.Log.Infof("伙伴%d断开连接", 123456)
 					return
 				}
 				if merr != nil {
+					common.Log.Info("3")
 					common.Log.Infof("读数据发生错误 %s", merr.Error())
 					break
 				} else {
-					common.Log.Info("收到消息 %s", strconv.FormatUint(uint64(msg.Mtype), 10))
+					common.Log.Info("收到消息 %v", msg)
 				}
+			}
+		}()
+
+		go func() {
+			for {
+				time.Sleep(time.Second * 2)
 
 				bmsg := &pb.HeartBeatReq{
 					Id: bulbasaur.Info.PartnerId,
@@ -82,8 +88,6 @@ func connectServer(addr string) error {
 					Data:  buf,
 				})
 				common.Log.Info("发送心跳消息")
-
-				common.Log.Info("two way client tick")
 			}
 		}()
 	}
@@ -108,7 +112,7 @@ func connectServer(addr string) error {
 	common.Log.Infof("开始和%s心跳", addr)
 
 	go func() {
-		for {
+		for false {
 			_, cerr := haClient.HeartBeat(context.Background(), &pb.HeartBeatReq{
 				Id: bulbasaur.Info.PartnerId,
 			})

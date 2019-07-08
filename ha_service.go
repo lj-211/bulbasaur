@@ -19,9 +19,9 @@ import (
 type HaServer struct{}
 
 func (s *HaServer) HeartBeat(ctx context.Context, req *pb.HeartBeatReq) (*empty.Empty, error) {
-	common.Log.Info("收到partner-%v心跳", req.Id)
+	common.Log.Infof("收到partner-%v心跳", req.Id)
 	if _, ok := Partners.Load(req.Id); ok {
-		common.Log.Info("新的partner-%v", req.Id)
+		common.Log.Infof("新的partner-%v", req.Id)
 		Partners.Store(req.Id, &PartnerInfo{
 			PartnerId:  req.Id,
 			Addr:       req.Addr,
@@ -95,14 +95,14 @@ func (this *HaServer) TwoWay(stream pb.Ha_TwoWayServer) error {
 	}
 }
 
-func HeartBeat(ctx context.Context, pid uint64, data []byte, stream grpc.ServerStream) error {
+func HeartBeat(ctx context.Context, pid uint64, data []byte, tw pb.Ha_TwoWayServer) error {
 	hb := &pb.HeartBeatReq{}
 	if err := proto.Unmarshal(data, hb); err != nil {
 		return errors.Wrapf(err, "解码消息出错")
 	}
 
 	common.Log.Infof("伙伴%d发来心跳消息", hb.Id)
-	//stream.Send(msg)
+	sendMsg(tw, MtypeHeartBeat, hb)
 
 	return nil
 }
