@@ -2,7 +2,6 @@ package bulbasaur
 
 import (
 	"context"
-	"io"
 	"time"
 
 	"github.com/golang/protobuf/proto"
@@ -73,11 +72,22 @@ func (this *HaServer) TwoWay(stream pb.Ha_TwoWayServer) error {
 	ctx := stream.Context()
 	pr, ok := peer.FromContext(ctx)
 	if !ok {
-		return
+		return nil
 	}
 
 	common.Log.Infof("peer发送消息: %+v", *pr)
 
+	lk := &Link{}
+	info := NodeInfo{
+		// 握手阶段id先留空
+		Addr: pr.Addr.String(),
+	}
+	lk.Construct(info, processMsg)
+	AddLink(MySelf, lk)
+
+	go lk.RunServerSide(stream)
+
+	return nil
 }
 
 func HeartBeat(ctx context.Context, lk *Link, msg *pb.Message) error {

@@ -32,8 +32,27 @@ type PartnerTunnel struct {
 var Tunnels PartnerTunnel
 
 type NodeInfo struct {
-	Id   string
-	Addr string
+	Id       string
+	Addr     string
+	LinkHead *Link
+	LinkTail *Link
+}
+
+var MySelf NodeInfo
+
+func AddLink(ni NodeInfo, lk *Link) {
+	if lk == nil {
+		return
+	}
+	if ni.LinkHead == nil {
+		ni.LinkHead = lk
+		ni.LinkTail = lk
+		return
+	}
+
+	lk.Pre = ni.LinkTail
+	lk.Next = nil
+	ni.LinkTail = lk
 }
 
 const (
@@ -49,6 +68,7 @@ type Link struct {
 	MsgContext   context.Context
 	Cancel       context.CancelFunc
 	Status       uint
+	Pre          *Link
 	Next         *Link
 	Process      MsgProcessor
 	IsServerSide bool
@@ -69,7 +89,7 @@ func (this *Link) Construct(info NodeInfo, p MsgProcessor) {
 	this.MsgContext, this.Cancel = context.WithCancel(context.Background())
 }
 
-func (this *Link) RunClientSide(info NodeInfo, client pb.Ha_TwoWayClient) {
+func (this *Link) RunClientSide(client pb.Ha_TwoWayClient) {
 	this.IsServerSide = false
 	//this.RecvBuf = make(chan pb.Message, 10)
 
@@ -124,7 +144,7 @@ func (this *Link) RunClientSide(info NodeInfo, client pb.Ha_TwoWayClient) {
 
 }
 
-func (this *Link) RunServerSide(info NodeInfo, ser pb.Ha_TwoWayServer) {
+func (this *Link) RunServerSide(ser pb.Ha_TwoWayServer) {
 	this.IsServerSide = true
 
 	doRecv := func() error {
