@@ -10,6 +10,7 @@ import (
 	"github.com/lj-211/grpcwrapper"
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/peer"
 
 	empty "github.com/golang/protobuf/ptypes/empty"
 	common "github.com/lj-211/bulbasaur/example"
@@ -69,6 +70,12 @@ func (s *HaServer) Register(ctx context.Context, req *pb.RegisterReq) (*pb.Regis
 }
 
 func (this *HaServer) TwoWay(stream pb.Ha_TwoWayServer) error {
+	ctx := stream.Context()
+	pr, ok := peer.FromContext(ctx)
+	if ok {
+		common.Log.Infof("peer发送消息: %+v", *pr)
+	}
+
 	var pid uint64
 	for {
 		msg, err := stream.Recv()
