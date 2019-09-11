@@ -186,30 +186,44 @@ func main() {
 			common.Log.Info("作为主节点运行")
 		}
 
-		for {
-			time.Sleep(time.Second * 5)
-			switch bulbasaur.Info.Role {
-			case pb.Role_Leader:
-				common.Log.Info("我是Leader")
-			case pb.Role_Follower:
-				common.Log.Info("我是Follower")
-			case pb.Role_Candidate:
-				common.Log.Info("我是Candidate")
-			default:
-				common.Log.Error("角色异常")
-			}
+		ticker := time.NewTicker(time.Second * 5)
+		defer ticker.Stop()
 
-			if bulbasaur.Info.Role == pb.Role_Leader {
-				common.Log.Info("partners:  start")
-				bulbasaur.Partners.Range(func(k, v interface{}) bool {
-					pinfo := v.(*bulbasaur.PartnerInfo)
-					common.Log.Infof("partners: %v %+v", k.(uint64), *pinfo)
-					return true
-				})
-				common.Log.Info("partners: end")
+		done := make(chan bool)
+
+		for {
+			select {
+			case <-done:
+				break
+			case t := <-ticker.C:
+				common.Log.Info("tick: ", t.Format("2006-01-02 15:04:05"))
+				switch bulbasaur.Info.Role {
+				case pb.Role_Leader:
+					common.Log.Info("我是Leader")
+				case pb.Role_Follower:
+					common.Log.Info("我是Follower")
+				case pb.Role_Candidate:
+					common.Log.Info("我是Candidate")
+				default:
+					common.Log.Error("角色异常")
+				}
+
+				if bulbasaur.Info.Role == pb.Role_Leader {
+					common.Log.Info("partners:  start")
+					bulbasaur.Partners.Range(func(k, v interface{}) bool {
+						pinfo := v.(*bulbasaur.PartnerInfo)
+						common.Log.Infof("partners: %v %+v", k.(uint64), *pinfo)
+						return true
+					})
+					common.Log.Info("partners: end")
+				}
 			}
 		}
 	}
 
-	fmt.Println("服务退出: ", exitErr.Error())
+	if exitErr != nil {
+		fmt.Println("服务异常退出: ", exitErr.Error())
+	} else {
+		common.Log.Info("任务完成")
+	}
 }
