@@ -72,36 +72,12 @@ func (s *HaServer) Register(ctx context.Context, req *pb.RegisterReq) (*pb.Regis
 func (this *HaServer) TwoWay(stream pb.Ha_TwoWayServer) error {
 	ctx := stream.Context()
 	pr, ok := peer.FromContext(ctx)
-	if ok {
-		common.Log.Infof("peer发送消息: %+v", *pr)
+	if !ok {
+		return
 	}
 
-	//var pid uint64
-	for {
-		msg, err := stream.Recv()
-		if err == io.EOF {
-			common.Log.Info("伙伴连接断开")
-			return nil
-		}
-		if err != nil {
-			return errors.Wrapf(err, "处理双向消息出错")
-		}
+	common.Log.Infof("peer发送消息: %+v", *pr)
 
-		if msg.Mtype == MtypeHeartBeat {
-			hb := &pb.HeartBeatReq{}
-			if err := proto.Unmarshal(msg.Data, hb); err != nil {
-				common.Log.Errorf("解码消息出错: %s", err.Error())
-				continue
-			}
-			//pid = hb.Id
-		}
-
-		/*
-			if perr := processMsg(context.Background(), pid, msg, stream); perr != nil {
-				common.Log.Errorf("处理消息时发生错误: %s", perr.Error())
-			}
-		*/
-	}
 }
 
 func HeartBeat(ctx context.Context, lk *Link, msg *pb.Message) error {
