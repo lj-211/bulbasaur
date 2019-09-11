@@ -62,8 +62,6 @@ func (this *Link) SendMsg(msg *pb.Message) {
 	this.SendBuf <- *msg
 }
 
-type MsgProcessor func(lk *Link, msg *pb.Message) error
-
 func (this *Link) Construct(info NodeInfo, p MsgProcessor) {
 	this.Process = p
 	this.Node = info
@@ -83,7 +81,7 @@ func (this *Link) RunClientSide(info NodeInfo, client pb.Ha_TwoWayClient) {
 
 		//this.RecvBuf <- msg
 		if this.Process != nil {
-			this.Process(this, msg)
+			this.Process(context.TODO(), this, msg)
 		}
 
 		return nil
@@ -136,7 +134,7 @@ func (this *Link) RunServerSide(info NodeInfo, ser pb.Ha_TwoWayServer) {
 		}
 
 		if this.Process != nil {
-			this.Process(this, msg)
+			this.Process(context.TODO(), this, msg)
 		}
 
 		return nil

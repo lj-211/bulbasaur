@@ -13,24 +13,25 @@ const (
 	MtypeHeartBeat = iota
 )
 
-type MsgProcess func(context.Context, uint64, []byte, pb.Ha_TwoWayServer) error
+type MsgProcessor func(context.Context, *Link, *pb.Message) error
 
-func processMsg(ctx context.Context, id uint64, msg *pb.Message, tw pb.Ha_TwoWayServer) error {
-	if id == 0 {
-		return errors.New("没有合法的伙伴id")
+func processMsg(ctx context.Context, lk *Link, msg *pb.Message) error {
+	if lk == nil {
+		return nil
 	}
 
 	if p, ok := MsgMap[msg.Mtype]; ok {
-		return p(ctx, id, msg.Data, tw)
+		return p(ctx, lk, msg)
 	} else {
-		return errors.Errorf("位置消息%d类型", msg.Mtype)
+		return errors.Errorf("未知消息%d类型", msg.Mtype)
 	}
+
 	return nil
 }
 
-var MsgMap map[uint32]MsgProcess = make(map[uint32]MsgProcess)
+var MsgMap map[uint32]MsgProcessor = make(map[uint32]MsgProcessor)
 
-func registerMsgProcess(mtype uint32, p MsgProcess) error {
+func registerMsgProcess(mtype uint32, p MsgProcessor) error {
 	if _, ok := MsgMap[mtype]; ok {
 		return errors.Errorf("消息%d处理已存在", mtype)
 	}
@@ -39,9 +40,12 @@ func registerMsgProcess(mtype uint32, p MsgProcess) error {
 	return nil
 }
 
-func sendMsg(tw pb.Ha_TwoWayServer, mtype int, msg proto.Message) {
+func sendMsg(lk *Link, mtype int, msg proto.Message) {
+	if lk == nil {
+		return
+	}
 	buf, _ := proto.Marshal(msg)
-	tw.Send(&pb.Message{
+	lk.SendMsg(&pb.Message{
 		Mtype: uint32(mtype),
 		Data:  buf,
 	})

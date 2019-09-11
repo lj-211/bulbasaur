@@ -76,7 +76,7 @@ func (this *HaServer) TwoWay(stream pb.Ha_TwoWayServer) error {
 		common.Log.Infof("peer发送消息: %+v", *pr)
 	}
 
-	var pid uint64
+	//var pid uint64
 	for {
 		msg, err := stream.Recv()
 		if err == io.EOF {
@@ -93,23 +93,31 @@ func (this *HaServer) TwoWay(stream pb.Ha_TwoWayServer) error {
 				common.Log.Errorf("解码消息出错: %s", err.Error())
 				continue
 			}
-			pid = hb.Id
+			//pid = hb.Id
 		}
 
-		if perr := processMsg(context.Background(), pid, msg, stream); perr != nil {
-			common.Log.Errorf("处理消息时发生错误: %s", perr.Error())
-		}
+		/*
+			if perr := processMsg(context.Background(), pid, msg, stream); perr != nil {
+				common.Log.Errorf("处理消息时发生错误: %s", perr.Error())
+			}
+		*/
 	}
 }
 
-func HeartBeat(ctx context.Context, pid uint64, data []byte, tw pb.Ha_TwoWayServer) error {
+func HeartBeat(ctx context.Context, lk *Link, msg *pb.Message) error {
+	if lk == nil {
+		return errors.New("连接为空")
+	}
+	if msg == nil {
+		return errors.New("消息为空")
+	}
+
 	hb := &pb.HeartBeatReq{}
-	if err := proto.Unmarshal(data, hb); err != nil {
+	if err := proto.Unmarshal(msg.Data, hb); err != nil {
 		return errors.Wrapf(err, "解码消息出错")
 	}
 
-	common.Log.Infof("伙伴%d发来心跳消息", hb.Id)
-	sendMsg(tw, MtypeHeartBeat, hb)
+	common.Log.Infof("伙伴发来心跳消息")
 
 	return nil
 }
