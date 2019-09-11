@@ -75,21 +75,23 @@ func connectServer(addr string) error {
 			}
 		}()
 
-		go func() {
-			for {
-				time.Sleep(time.Second * 2)
+		if false {
+			go func() {
+				for {
+					time.Sleep(time.Second * 2)
 
-				bmsg := &pb.HeartBeatReq{
-					Id: bulbasaur.Info.PartnerId,
+					bmsg := &pb.HeartBeatReq{
+						Id: bulbasaur.Info.PartnerId,
+					}
+					buf, _ := proto.Marshal(bmsg)
+					tw.Send(&pb.Message{
+						Mtype: bulbasaur.MtypeHeartBeat,
+						Data:  buf,
+					})
+					common.Log.Info("发送心跳消息")
 				}
-				buf, _ := proto.Marshal(bmsg)
-				tw.Send(&pb.Message{
-					Mtype: bulbasaur.MtypeHeartBeat,
-					Data:  buf,
-				})
-				common.Log.Info("发送心跳消息")
-			}
-		}()
+			}()
+		}
 	}
 
 	for false {
