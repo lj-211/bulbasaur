@@ -6,7 +6,9 @@ import (
 	"sync"
 	"time"
 
+	"github.com/lj-211/grpcwrapper"
 	"github.com/pkg/errors"
+	"google.golang.org/grpc"
 
 	pb "github.com/lj-211/bulbasaur/protocol"
 )
@@ -195,4 +197,30 @@ func (this *Link) RunServerSide(ser pb.Ha_TwoWayServer) {
 		return err
 	}(this.MsgContext)
 
+}
+
+func ConnectNode(id int, addr string) error {
+	clientOpt := grpcwrapper.DefaultClient()
+	client, derr := clientOpt.DialContext(context.Background(), addr, grpc.WithBlock())
+	if derr != nil {
+		return errors.Wrap(derr, "连接服务器失败")
+	}
+	haClient := pb.NewHaClient(client)
+
+	tw, twErr := haClient.TwoWay(context.Background())
+	if twErr != nil {
+		return errors.Wrap(twErr, "连接节点失败")
+	}
+
+	lk := &Link{}
+	info := NodeInfo{
+		// 握手阶段id先留空
+		Addr: addr,
+	}
+	lk.Construct(info, processMsg)
+	AddLink(MySelf, lk)
+
+	go lk.RunClientSide(tw)
+
+	return nil
 }
