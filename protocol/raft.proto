@@ -17,12 +17,6 @@ enum Role {
     Leader      = 2;
 }
 
-enum Pstatus {
-    Ok          = 0;
-    Connecting  = 1;
-    Lost        = 2;
-}
-
 // common msg
 message Message {
     uint32 mtype = 1;
@@ -34,28 +28,6 @@ message NodeInfo {
     string addr = 2;
 }
 
-// 心跳请求
-message HeartBeatReq {
-    uint64  id   = 1;
-    string  addr = 2;
-    int32   role = 3;
-}
-
-message GetNodeListReq {
-    uint32  id = 1;
-}
-
-message GetNodeListRes {
-}
-
-message RegisterReq {
-    uint64 id = 1;
-    string addr = 2;
-}
-
-message RegisterRes {
-}
-
 message Ping {
     string id = 1;
 }
@@ -65,12 +37,6 @@ message Pong {
 }
 
 service Ha {
-    // 心跳包
-    rpc HeartBeat (HeartBeatReq) returns (google.protobuf.Empty);
-    // 获取节点信息
-    rpc GetNodeList(GetNodeListReq) returns (GetNodeListRes);
-    // 注册节点
-    rpc Register(RegisterReq) returns (RegisterRes);
     // 通用双向消息
     rpc TwoWay(stream Message) returns (stream Message);
 }

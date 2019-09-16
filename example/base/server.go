@@ -45,93 +45,6 @@ func startServer(addr string) error {
 	return nil
 }
 
-func connectServer(addr string) error {
-	clientOpt := grpcwrapper.DefaultClient()
-	client, derr := clientOpt.DialContext(context.Background(), addr, grpc.WithBlock())
-	if derr != nil {
-		return errors.Wrap(derr, "连接服务器失败")
-	}
-	haClient := pb.NewHaClient(client)
-
-	tw, twErr := haClient.TwoWay(context.Background())
-	if twErr != nil {
-		common.Log.Errorf("创建双向客户端失败: %s", twErr.Error())
-	} else {
-		go func() {
-			for {
-				common.Log.Info("two way client tick")
-				msg, merr := tw.Recv()
-				if merr == io.EOF {
-					common.Log.Infof("伙伴%d断开连接", 123456)
-					return
-				}
-				if merr != nil {
-					common.Log.Info("3")
-					common.Log.Infof("读数据发生错误 %s", merr.Error())
-					break
-				} else {
-					common.Log.Info("收到消息 %v", msg)
-				}
-			}
-		}()
-
-		if false {
-			go func() {
-				for {
-					time.Sleep(time.Second * 2)
-
-					bmsg := &pb.HeartBeatReq{
-						Id: bulbasaur.Info.PartnerId,
-					}
-					buf, _ := proto.Marshal(bmsg)
-					tw.Send(&pb.Message{
-						Mtype: bulbasaur.MTypeHeartBeat,
-						Data:  buf,
-					})
-					common.Log.Info("发送心跳消息")
-				}
-			}()
-		}
-	}
-
-	for false {
-		_, err := haClient.Register(context.Background(), &pb.RegisterReq{
-			Id:   uint64(bulbasaur.Info.PartnerId),
-			Addr: bulbasaur.Info.Addr,
-		})
-		if err != nil {
-			ec, _ := ecode.Cause(err).(ecode.Codes)
-			common.Log.Info("连接远端发生错误: ", ec.Message())
-			time.Sleep(time.Second * 2)
-			continue
-		}
-
-		time.Sleep(time.Second)
-
-		break
-	}
-
-	common.Log.Infof("开始和%s心跳", addr)
-
-	go func() {
-		for false {
-			_, cerr := haClient.HeartBeat(context.Background(), &pb.HeartBeatReq{
-				Id: bulbasaur.Info.PartnerId,
-			})
-			if cerr != nil {
-				if ec, ok := ecode.Cause(cerr).(ecode.Codes); ok {
-					common.Log.Info("CLI-心跳返回标准错误码: ", ec.Code(), ec.Message())
-				} else {
-					common.Log.Info("CLI-心跳发生错误: ", cerr.Error())
-				}
-			}
-			time.Sleep(time.Second * 3)
-		}
-	}()
-
-	return nil
-}
-
 var serverAddr string
 var selfAddr string
 var partnerId uint
@@ -178,12 +91,6 @@ func main() {
 		initSelfPartnerInfo()
 
 		if serverAddr != "" {
-			/*
-				if err := connectServer(serverAddr); err != nil {
-					exitErr = errors.Wrap(err, "连接服务失败")
-					break
-				}
-			*/
 			var lk *bulbasaur.Link = nil
 			var err error = nil
 			if lk, err = bulbasaur.ConnectNode(1, serverAddr); err != nil {
