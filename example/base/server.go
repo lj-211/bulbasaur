@@ -178,10 +178,30 @@ func main() {
 		initSelfPartnerInfo()
 
 		if serverAddr != "" {
-			if err := connectServer(serverAddr); err != nil {
+			/*
+				if err := connectServer(serverAddr); err != nil {
+					exitErr = errors.Wrap(err, "连接服务失败")
+					break
+				}
+			*/
+			var lk *bulbasaur.Link = nil
+			var err error = nil
+			if lk, err = bulbasaur.ConnectNode(1, serverAddr); err != nil {
 				exitErr = errors.Wrap(err, "连接服务失败")
 				break
 			}
+			if true {
+				bmsg := &pb.HeartBeatReq{
+					Id: bulbasaur.Info.PartnerId,
+				}
+				buf, _ := proto.Marshal(bmsg)
+				lk.SendMsg(&pb.Message{
+					Mtype: bulbasaur.MtypeHeartBeat,
+					Data:  buf,
+				})
+				common.Log.Info("发送心跳消息")
+			}
+
 			bulbasaur.Info.Role = pb.Role_Follower
 		} else {
 			bulbasaur.Info.Role = pb.Role_Leader

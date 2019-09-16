@@ -199,17 +199,17 @@ func (this *Link) RunServerSide(ser pb.Ha_TwoWayServer) {
 
 }
 
-func ConnectNode(id int, addr string) error {
+func ConnectNode(id int, addr string) (*Link, error) {
 	clientOpt := grpcwrapper.DefaultClient()
 	client, derr := clientOpt.DialContext(context.Background(), addr, grpc.WithBlock())
 	if derr != nil {
-		return errors.Wrap(derr, "连接服务器失败")
+		return nil, errors.Wrap(derr, "连接服务器失败")
 	}
 	haClient := pb.NewHaClient(client)
 
 	tw, twErr := haClient.TwoWay(context.Background())
 	if twErr != nil {
-		return errors.Wrap(twErr, "连接节点失败")
+		return nil, errors.Wrap(twErr, "连接节点失败")
 	}
 
 	lk := &Link{}
@@ -222,5 +222,8 @@ func ConnectNode(id int, addr string) error {
 
 	go lk.RunClientSide(tw)
 
-	return nil
+	return lk, nil
+}
+
+func NodeCron() {
 }
