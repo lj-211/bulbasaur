@@ -2,6 +2,7 @@ package bulbasaur
 
 import (
 	"context"
+	"io"
 	"math/rand"
 	"sync"
 	"time"
@@ -139,36 +140,28 @@ func (this *Link) Construct(info NodeInfo, p MsgProcessor) {
 
 func (this *Link) RunClientSide(client pb.Ha_TwoWayClient) {
 	this.IsServerSide = false
-	//this.RecvBuf = make(chan pb.Message, 10)
 
-	doRecv := func() error {
-		msg, err := client.Recv()
-		if err != nil {
-			return errors.Wrap(err, "client读操作发生错误")
-		}
-		common.Log.Debugf("client recv msg")
-
-		//this.RecvBuf <- msg
-		if this.Process != nil {
-			this.Process(context.TODO(), this, msg)
-		}
-
-		return nil
-	}
-
-	// TODO 启动写协程
 	go func(ctx context.Context) {
-		var err error
 	ForLoop:
 		for {
 			select {
 			case <-ctx.Done():
 				break ForLoop
 			default:
-				err = doRecv()
-				if err != nil {
+				msg, terr := client.Recv()
+				if terr == io.EOF {
+					common.Log.Error("收取消息错误: ", terr.Error())
 					break ForLoop
 				}
+				if terr != nil {
+					common.Log.Infof("client recv err %s", terr.Error())
+					break
+				}
+				if msg != nil && this.Process != nil {
+					common.Log.Infof("client recv msg %+v", msg)
+					this.Process(context.TODO(), this, msg)
+				}
+				time.Sleep(time.Second * 2)
 			}
 		}
 
@@ -196,32 +189,26 @@ func (this *Link) RunClientSide(client pb.Ha_TwoWayClient) {
 func (this *Link) RunServerSide(ser pb.Ha_TwoWayServer) {
 	this.IsServerSide = true
 
-	doRecv := func() error {
-		msg, err := ser.Recv()
-		if err != nil {
-			return errors.Wrap(err, "ser读操作发生错误")
-		}
-
-		if this.Process != nil {
-			this.Process(context.TODO(), this, msg)
-		}
-
-		return nil
-	}
-
-	// TODO 启动写协程
 	go func(ctx context.Context) {
-		var err error
 	ForLoop:
 		for {
 			select {
 			case <-ctx.Done():
 				break ForLoop
 			default:
-				err = doRecv()
-				if err != nil {
+				msg, terr := ser.Recv()
+				if terr == io.EOF {
+					common.Log.Error("ser收取消息错误: ", terr.Error())
 					break ForLoop
 				}
+				if terr != nil {
+					break
+				}
+				if msg != nil && this.Process != nil {
+					common.Log.Infof("server recv msg %+v", msg)
+					this.Process(context.TODO(), this, msg)
+				}
+				time.Sleep(time.Second * 2)
 			}
 		}
 
@@ -236,6 +223,7 @@ func (this *Link) RunServerSide(ser pb.Ha_TwoWayServer) {
 			case <-ctx.Done():
 				break ForLoop
 			case msg := <-this.SendBuf:
+				common.Log.Info("服务器发送消息")
 				err = ser.Send(&msg)
 				break ForLoop
 			}

@@ -63,10 +63,13 @@ func PingProc(ctx context.Context, lk *Link, msg *pb.Message) error {
 
 	common.Log.Infof("%s响应ping,完成握手", ping.Id)
 
-	pmsg := &pb.Pong{
-		Id: MySelf.Id,
-	}
-	sendMsg(lk, MTypePong, pmsg)
+	/*
+		pmsg := &pb.Pong{
+			Id: MySelf.Id,
+		}
+		sendMsg(lk, MTypePong, pmsg)
+		sendMsg(lk, MTypePong, pmsg)
+	*/
 
 	return nil
 }
@@ -90,7 +93,7 @@ func PongProc(ctx context.Context, lk *Link, msg *pb.Message) error {
 	lk.LastActive = time.Now()
 	lk.Node.Id = pong.Id
 
-	common.Log.Info("%s响应ping,完成握手", pong.Id)
+	common.Log.Info("%s响应pong,完成握手", pong.Id)
 
 	return nil
 }

@@ -1,17 +1,15 @@
 package main
 
 import (
-	"context"
 	"flag"
 	"fmt"
-	"io"
 	"time"
 
 	"github.com/golang/protobuf/proto"
-	"github.com/lj-211/common/ecode"
+	//"github.com/lj-211/common/ecode"
 	"github.com/lj-211/grpcwrapper"
 	"github.com/pkg/errors"
-	"google.golang.org/grpc"
+	//"google.golang.org/grpc"
 
 	"github.com/lj-211/bulbasaur"
 	common "github.com/lj-211/bulbasaur/example"
@@ -97,7 +95,9 @@ func main() {
 				exitErr = errors.Wrap(err, "连接服务失败")
 				break
 			}
-			if true {
+
+			// do handshake
+			if false {
 				bmsg := &pb.Ping{
 					Id: fmt.Sprintf("%d", bulbasaur.Info.PartnerId),
 				}
@@ -106,8 +106,8 @@ func main() {
 					Mtype: bulbasaur.MTypePing,
 					Data:  buf,
 				})
-				common.Log.Info("发送心跳消息")
 			}
+			common.Log.Info("发送心跳消息")
 
 			bulbasaur.Info.Role = pb.Role_Follower
 		} else {
@@ -115,7 +115,7 @@ func main() {
 			common.Log.Info("作为主节点运行")
 		}
 
-		ticker := time.NewTicker(time.Second * 5)
+		ticker := time.NewTicker(time.Second * 10)
 		defer ticker.Stop()
 
 		done := make(chan bool)
