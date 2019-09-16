@@ -21,7 +21,7 @@ func (l Logger) Info(args ...interface{}) {
 
 func (l Logger) Infof(format string, args ...interface{}) {
 	if l.Logger != nil {
-		l.Logger.Infof(format, args)
+		l.Logger.Infof(format, args...)
 	}
 }
 

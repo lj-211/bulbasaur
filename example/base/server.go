@@ -85,7 +85,7 @@ func connectServer(addr string) error {
 					}
 					buf, _ := proto.Marshal(bmsg)
 					tw.Send(&pb.Message{
-						Mtype: bulbasaur.MtypeHeartBeat,
+						Mtype: bulbasaur.MTypeHeartBeat,
 						Data:  buf,
 					})
 					common.Log.Info("发送心跳消息")
@@ -191,12 +191,12 @@ func main() {
 				break
 			}
 			if true {
-				bmsg := &pb.HeartBeatReq{
-					Id: bulbasaur.Info.PartnerId,
+				bmsg := &pb.Ping{
+					Id: fmt.Sprintf("%d", bulbasaur.Info.PartnerId),
 				}
 				buf, _ := proto.Marshal(bmsg)
 				lk.SendMsg(&pb.Message{
-					Mtype: bulbasaur.MtypeHeartBeat,
+					Mtype: bulbasaur.MTypePing,
 					Data:  buf,
 				})
 				common.Log.Info("发送心跳消息")
@@ -230,15 +230,8 @@ func main() {
 					common.Log.Error("角色异常")
 				}
 
-				if bulbasaur.Info.Role == pb.Role_Leader {
-					common.Log.Info("partners:  start")
-					bulbasaur.Partners.Range(func(k, v interface{}) bool {
-						pinfo := v.(*bulbasaur.PartnerInfo)
-						common.Log.Infof("partners: %v %+v", k.(uint64), *pinfo)
-						return true
-					})
-					common.Log.Info("partners: end")
-				}
+				// 打印节点信息
+				bulbasaur.PrintLinkList()
 			}
 		}
 	}

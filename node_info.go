@@ -10,6 +10,7 @@ import (
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
 
+	common "github.com/lj-211/bulbasaur/example"
 	pb "github.com/lj-211/bulbasaur/protocol"
 )
 
@@ -41,11 +42,31 @@ type NodeInfo struct {
 }
 
 var MySelf NodeInfo
+var LinkLock sync.RWMutex
 
-func AddLink(ni NodeInfo, lk *Link) {
+func PrintLinkList() {
+	LinkLock.RLock()
+	defer LinkLock.RUnlock()
+
+	common.Log.Info("节点列表: ")
+	common.Log.Info("====================")
+	node := MySelf.LinkHead
+	for node != nil {
+		common.Log.Infof("节点: %s 地址: %s, 状态: %s", node.Node.Id,
+			node.Node.Addr, getLinkStatusStr(node.Status))
+		node = node.Next
+	}
+	common.Log.Info("====================")
+}
+
+func AddLink(ni *NodeInfo, lk *Link) {
 	if lk == nil {
 		return
 	}
+
+	LinkLock.Lock()
+	defer LinkLock.Unlock()
+
 	if ni.LinkHead == nil {
 		ni.LinkHead = lk
 		ni.LinkTail = lk
@@ -58,10 +79,32 @@ func AddLink(ni NodeInfo, lk *Link) {
 }
 
 const (
-	LinkStatus_SHAKEHAND = iota
+	LinkStatus_UNKNOWN = iota
+	LinkStatus_SHAKEHAND
 	LinkStatus_PFAIL
 	LinkStatus_FAIL
+	LinkStatus_ACTIVE
 )
+
+func getLinkStatusStr(status uint) string {
+	s_str := ""
+	switch status {
+	case LinkStatus_UNKNOWN:
+		s_str = "未知"
+	case LinkStatus_SHAKEHAND:
+		s_str = "握手"
+	case LinkStatus_PFAIL:
+		s_str = "丢失待确认"
+	case LinkStatus_FAIL:
+		s_str = "丢失"
+	case LinkStatus_ACTIVE:
+		s_str = "存活"
+	default:
+		s_str = "非法状态"
+	}
+
+	return s_str
+}
 
 type Link struct {
 	Node    NodeInfo
@@ -74,6 +117,7 @@ type Link struct {
 	Next         *Link
 	Process      MsgProcessor
 	IsServerSide bool
+	LastActive   time.Time
 }
 
 func (this *Link) SendMsg(msg *pb.Message) {
@@ -87,8 +131,10 @@ func (this *Link) SendMsg(msg *pb.Message) {
 func (this *Link) Construct(info NodeInfo, p MsgProcessor) {
 	this.Process = p
 	this.Node = info
+	this.Status = LinkStatus_SHAKEHAND
 	this.SendBuf = make(chan pb.Message, 10)
 	this.MsgContext, this.Cancel = context.WithCancel(context.Background())
+	this.LastActive = time.Now()
 }
 
 func (this *Link) RunClientSide(client pb.Ha_TwoWayClient) {
@@ -100,6 +146,7 @@ func (this *Link) RunClientSide(client pb.Ha_TwoWayClient) {
 		if err != nil {
 			return errors.Wrap(err, "client读操作发生错误")
 		}
+		common.Log.Debugf("client recv msg")
 
 		//this.RecvBuf <- msg
 		if this.Process != nil {
@@ -218,7 +265,7 @@ func ConnectNode(id int, addr string) (*Link, error) {
 		Addr: addr,
 	}
 	lk.Construct(info, processMsg)
-	AddLink(MySelf, lk)
+	AddLink(&MySelf, lk)
 
 	go lk.RunClientSide(tw)
 
@@ -226,4 +273,12 @@ func ConnectNode(id int, addr string) (*Link, error) {
 }
 
 func NodeCron() {
+	LinkLock.Lock()
+	LinkLock.Unlock()
+
+	// 1. 检查状态
+	node := MySelf.LinkHead
+	for node != nil {
+		node = node.Next
+	}
 }

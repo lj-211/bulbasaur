@@ -83,14 +83,14 @@ func (this *HaServer) TwoWay(stream pb.Ha_TwoWayServer) error {
 		Addr: pr.Addr.String(),
 	}
 	lk.Construct(info, processMsg)
-	AddLink(MySelf, lk)
+	AddLink(&MySelf, lk)
 
 	go lk.RunServerSide(stream)
 
 	return nil
 }
 
-func HeartBeat(ctx context.Context, lk *Link, msg *pb.Message) error {
+func PingProc(ctx context.Context, lk *Link, msg *pb.Message) error {
 	if lk == nil {
 		return errors.New("连接为空")
 	}
@@ -98,16 +98,54 @@ func HeartBeat(ctx context.Context, lk *Link, msg *pb.Message) error {
 		return errors.New("消息为空")
 	}
 
-	hb := &pb.HeartBeatReq{}
-	if err := proto.Unmarshal(msg.Data, hb); err != nil {
+	ping := &pb.Ping{}
+	if err := proto.Unmarshal(msg.Data, ping); err != nil {
 		return errors.Wrapf(err, "解码消息出错")
 	}
 
 	common.Log.Infof("伙伴发来心跳消息")
 
+	if lk.Status == LinkStatus_SHAKEHAND {
+		lk.Status = LinkStatus_ACTIVE
+	}
+	lk.LastActive = time.Now()
+	lk.Node.Id = ping.Id
+
+	common.Log.Infof("%s响应ping,完成握手", ping.Id)
+
+	pmsg := &pb.Pong{
+		Id: MySelf.Id,
+	}
+	sendMsg(lk, MTypePong, pmsg)
+
+	return nil
+}
+
+func PongProc(ctx context.Context, lk *Link, msg *pb.Message) error {
+	if lk == nil {
+		return errors.New("连接为空")
+	}
+	if msg == nil {
+		return errors.New("消息为空")
+	}
+
+	pong := &pb.Pong{}
+	if err := proto.Unmarshal(msg.Data, pong); err != nil {
+		return errors.Wrapf(err, "解码消息出错")
+	}
+
+	if lk.Status == LinkStatus_SHAKEHAND {
+		lk.Status = LinkStatus_ACTIVE
+	}
+	lk.LastActive = time.Now()
+	lk.Node.Id = pong.Id
+
+	common.Log.Info("%s响应ping,完成握手", pong.Id)
+
 	return nil
 }
 
 func init() {
-	registerMsgProcess(MtypeHeartBeat, HeartBeat)
+	registerMsgProcess(MTypePing, PingProc)
+	registerMsgProcess(MTypePong, PongProc)
 }

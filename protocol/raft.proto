@@ -56,6 +56,14 @@ message RegisterReq {
 message RegisterRes {
 }
 
+message Ping {
+    string id = 1;
+}
+
+message Pong {
+    string id = 1;
+}
+
 service Ha {
     // 心跳包
     rpc HeartBeat (HeartBeatReq) returns (google.protobuf.Empty);

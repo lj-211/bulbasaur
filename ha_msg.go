@@ -10,7 +10,9 @@ import (
 )
 
 const (
-	MtypeHeartBeat = iota
+	MTypeHeartBeat = iota
+	MTypePing
+	MTypePong
 )
 
 type MsgProcessor func(context.Context, *Link, *pb.Message) error
