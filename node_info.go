@@ -189,32 +189,7 @@ func (this *Link) RunClientSide(client pb.Ha_TwoWayClient) {
 func (this *Link) RunServerSide(ser pb.Ha_TwoWayServer) {
 	this.IsServerSide = true
 
-	go func(ctx context.Context) {
-	ForLoop:
-		for {
-			select {
-			case <-ctx.Done():
-				break ForLoop
-			default:
-				msg, terr := ser.Recv()
-				if terr == io.EOF {
-					common.Log.Error("ser收取消息错误: ", terr.Error())
-					break ForLoop
-				}
-				if terr != nil {
-					break
-				}
-				if msg != nil && this.Process != nil {
-					common.Log.Infof("server recv msg %+v", msg)
-					this.Process(context.TODO(), this, msg)
-				}
-				time.Sleep(time.Second * 2)
-			}
-		}
-
-		// TODO 处理link异常
-	}(this.MsgContext)
-
+	// send
 	go func(ctx context.Context) error {
 		var err error
 	ForLoop:
@@ -232,6 +207,29 @@ func (this *Link) RunServerSide(ser pb.Ha_TwoWayServer) {
 		return err
 	}(this.MsgContext)
 
+ForLoop:
+	for {
+		select {
+		case <-this.MsgContext.Done():
+			break ForLoop
+		default:
+			msg, terr := ser.Recv()
+			if terr == io.EOF {
+				common.Log.Error("ser收取消息错误: ", terr.Error())
+				break ForLoop
+			}
+			if terr != nil {
+				break
+			}
+			if msg != nil && this.Process != nil {
+				common.Log.Infof("server recv msg %+v", msg)
+				this.Process(context.TODO(), this, msg)
+			}
+			time.Sleep(time.Second * 2)
+		}
+	}
+
+	// TODO 处理link异常
 }
 
 func ConnectNode(id int, addr string) (*Link, error) {
