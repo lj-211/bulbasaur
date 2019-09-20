@@ -71,12 +71,24 @@ func AddLink(ni *NodeInfo, lk *Link) {
 	if ni.LinkHead == nil {
 		ni.LinkHead = lk
 		ni.LinkTail = lk
+		ni.LinkTail.Pre = ni.LinkHead
+		common.Log.Info("init link list")
 		return
 	}
 
-	lk.Pre = ni.LinkTail
+	old := ni.LinkTail
+	lk.Pre = old
 	lk.Next = nil
+	old.Next = lk
 	ni.LinkTail = lk
+	common.Log.Info("add link list")
+	node := ni.LinkHead
+	common.Log.Info(node)
+	for node != nil {
+		common.Log.Infof("节点: %s", node.Node.Id)
+		node = node.Next
+	}
+	common.Log.Info("******************")
 }
 
 const (
@@ -119,6 +131,7 @@ type Link struct {
 	Process      MsgProcessor
 	IsServerSide bool
 	LastActive   time.Time
+	away         chan bool
 }
 
 func (this *Link) SendMsg(msg *pb.Message) {
@@ -136,6 +149,23 @@ func (this *Link) Construct(info NodeInfo, p MsgProcessor) {
 	this.SendBuf = make(chan pb.Message, 10)
 	this.MsgContext, this.Cancel = context.WithCancel(context.Background())
 	this.LastActive = time.Now()
+	this.away = make(chan bool)
+
+	go func() {
+		<-this.away
+		common.Log.Infof("%s丢失", this.Node.Addr)
+		this.Cancel()
+		this.Status = LinkStatus_FAIL
+
+		// clear channel
+		for range this.away {
+		}
+	}()
+}
+
+func (this *Link) Goaway() {
+	this.away <- true
+	common.Log.Info("goaway")
 }
 
 func (this *Link) RunClientSide(client pb.Ha_TwoWayClient) {
@@ -151,11 +181,13 @@ func (this *Link) RunClientSide(client pb.Ha_TwoWayClient) {
 				msg, terr := client.Recv()
 				if terr == io.EOF {
 					common.Log.Error("收取消息错误: ", terr.Error())
-					break ForLoop
+					this.Goaway()
+					return
 				}
 				if terr != nil {
-					common.Log.Infof("client recv err %s", terr.Error())
-					break
+					common.Log.Infof("-client recv err %s", terr.Error())
+					this.Goaway()
+					return
 				}
 				if msg != nil && this.Process != nil {
 					common.Log.Infof("client recv msg %+v", msg)
@@ -164,24 +196,22 @@ func (this *Link) RunClientSide(client pb.Ha_TwoWayClient) {
 				time.Sleep(time.Second * 2)
 			}
 		}
-
-		// TODO 处理link异常
 	}(this.MsgContext)
 
-	go func(ctx context.Context) error {
-		var err error
+	go func(ctx context.Context) {
 	ForLoop:
 		for {
 			select {
 			case <-ctx.Done():
 				break ForLoop
 			case msg := <-this.SendBuf:
-				err = client.Send(&msg)
-				break ForLoop
+				err := client.Send(&msg)
+				if err != nil {
+					common.Log.Infof("client side error %s", err.Error())
+					this.Goaway()
+				}
 			}
 		}
-		// TODO 处理link异常
-		return err
 	}(this.MsgContext)
 
 }
@@ -190,8 +220,7 @@ func (this *Link) RunServerSide(ser pb.Ha_TwoWayServer) {
 	this.IsServerSide = true
 
 	// send
-	go func(ctx context.Context) error {
-		var err error
+	go func(ctx context.Context) {
 	ForLoop:
 		for {
 			select {
@@ -199,12 +228,13 @@ func (this *Link) RunServerSide(ser pb.Ha_TwoWayServer) {
 				break ForLoop
 			case msg := <-this.SendBuf:
 				common.Log.Info("服务器发送消息")
-				err = ser.Send(&msg)
+				err := ser.Send(&msg)
+				if err != nil {
+					this.Goaway()
+				}
 				break ForLoop
 			}
 		}
-		// TODO 处理link异常
-		return err
 	}(this.MsgContext)
 
 ForLoop:
@@ -216,10 +246,11 @@ ForLoop:
 			msg, terr := ser.Recv()
 			if terr == io.EOF {
 				common.Log.Error("ser收取消息错误: ", terr.Error())
+				this.Goaway()
 				break ForLoop
 			}
 			if terr != nil {
-				break
+				break ForLoop
 			}
 			if msg != nil && this.Process != nil {
 				common.Log.Infof("server recv msg %+v", msg)
@@ -230,6 +261,7 @@ ForLoop:
 	}
 
 	// TODO 处理link异常
+	this.Goaway()
 }
 
 func ConnectNode(id int, addr string) (*Link, error) {

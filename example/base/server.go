@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/golang/protobuf/proto"
@@ -27,6 +28,7 @@ func initSelfPartnerInfo() {
 	bulbasaur.Info.Addr = selfAddr
 	if partnerId != 0 {
 		bulbasaur.Info.PartnerId = uint64(partnerId)
+		bulbasaur.MySelf.Id = strconv.Itoa(int(partnerId))
 	}
 
 	bulbasaur.Tunnels.Clients = make(map[uint64]pb.HaClient)
@@ -97,7 +99,7 @@ func main() {
 			}
 
 			// do handshake
-			if false {
+			if true {
 				bmsg := &pb.Ping{
 					Id: fmt.Sprintf("%d", bulbasaur.Info.PartnerId),
 				}

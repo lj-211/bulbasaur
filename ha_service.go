@@ -35,7 +35,7 @@ func (this *HaServer) TwoWay(stream pb.Ha_TwoWayServer) error {
 	lk.Construct(info, processMsg)
 	AddLink(&MySelf, lk)
 
-	go lk.RunServerSide(stream)
+	lk.RunServerSide(stream)
 
 	return nil
 }
@@ -63,13 +63,10 @@ func PingProc(ctx context.Context, lk *Link, msg *pb.Message) error {
 
 	common.Log.Infof("%s响应ping,完成握手", ping.Id)
 
-	/*
-		pmsg := &pb.Pong{
-			Id: MySelf.Id,
-		}
-		sendMsg(lk, MTypePong, pmsg)
-		sendMsg(lk, MTypePong, pmsg)
-	*/
+	pmsg := &pb.Pong{
+		Id: MySelf.Id,
+	}
+	sendMsg(lk, MTypePong, pmsg)
 
 	return nil
 }
@@ -88,12 +85,13 @@ func PongProc(ctx context.Context, lk *Link, msg *pb.Message) error {
 	}
 
 	if lk.Status == LinkStatus_SHAKEHAND {
+		common.Log.Infof("设置link状态为存活")
 		lk.Status = LinkStatus_ACTIVE
 	}
 	lk.LastActive = time.Now()
 	lk.Node.Id = pong.Id
 
-	common.Log.Info("%s响应pong,完成握手", pong.Id)
+	common.Log.Infof("%s响应pong,完成握手", pong.Id)
 
 	return nil
 }
