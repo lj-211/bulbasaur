@@ -7,6 +7,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/golang/protobuf/proto"
 	"github.com/lj-211/grpcwrapper"
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
@@ -171,6 +172,7 @@ func (this *Link) Goaway() {
 func (this *Link) RunClientSide(client pb.Ha_TwoWayClient) {
 	this.IsServerSide = false
 
+	rctx, _ := context.WithCancel(this.MsgContext)
 	go func(ctx context.Context) {
 	ForLoop:
 		for {
@@ -196,8 +198,9 @@ func (this *Link) RunClientSide(client pb.Ha_TwoWayClient) {
 				time.Sleep(time.Second * 2)
 			}
 		}
-	}(this.MsgContext)
+	}(rctx)
 
+	sctx, _ := context.WithCancel(this.MsgContext)
 	go func(ctx context.Context) {
 	ForLoop:
 		for {
@@ -212,7 +215,7 @@ func (this *Link) RunClientSide(client pb.Ha_TwoWayClient) {
 				}
 			}
 		}
-	}(this.MsgContext)
+	}(sctx)
 
 }
 
@@ -220,6 +223,7 @@ func (this *Link) RunServerSide(ser pb.Ha_TwoWayServer) {
 	this.IsServerSide = true
 
 	// send
+	sctx, _ := context.WithCancel(this.MsgContext)
 	go func(ctx context.Context) {
 	ForLoop:
 		for {
@@ -235,7 +239,7 @@ func (this *Link) RunServerSide(ser pb.Ha_TwoWayServer) {
 				break ForLoop
 			}
 		}
-	}(this.MsgContext)
+	}(sctx)
 
 ForLoop:
 	for {
@@ -264,6 +268,28 @@ ForLoop:
 	this.Goaway()
 }
 
+func NodeOk(id string) {
+	LinkLock.RLock()
+	LinkLock.RUnlock()
+
+	node := MySelf.LinkHead
+	for node != nil {
+		if node.Node.Id == id {
+			bmsg := &pb.Ping{
+				Id: MySelf.Id,
+			}
+			buf, _ := proto.Marshal(bmsg)
+			node.SendMsg(&pb.Message{
+				Mtype: MTypePing,
+				Data:  buf,
+			})
+			break
+		}
+
+		node = node.Next
+	}
+}
+
 func ConnectNode(id int, addr string) (*Link, error) {
 	clientOpt := grpcwrapper.DefaultClient()
 	client, derr := clientOpt.DialContext(context.Background(), addr, grpc.WithBlock())
@@ -290,13 +316,70 @@ func ConnectNode(id int, addr string) (*Link, error) {
 	return lk, nil
 }
 
+const MaxLostTime time.Duration = time.Second * 5
+
 func NodeCron() {
 	LinkLock.Lock()
 	LinkLock.Unlock()
 
-	// 1. 检查状态
 	node := MySelf.LinkHead
 	for node != nil {
-		node = node.Next
+		next := node.Next
+		for ok := true; ok; ok = false {
+			if node.Status == LinkStatus_PFAIL {
+				now := time.Now()
+				if now.Sub(node.LastActive) > 2*MaxLostTime {
+					node.Status = LinkStatus_FAIL
+				}
+				break
+			}
+			// 1. 删除已丢失状态的link
+			if node.Status == LinkStatus_FAIL {
+				if node == MySelf.LinkHead {
+					MySelf.LinkHead = next
+				}
+				if next == nil {
+					node.Pre.Next = nil
+					MySelf.LinkTail = node.Pre
+				} else {
+					node.Pre.Next = node.Next
+					node.Next.Pre = node.Pre
+				}
+
+				common.Log.Infof("已丢失节点%s被剔除连接列表", node.Node.Id)
+				break
+			}
+
+			// 2. 检查客户端link active时间，标志状态为PFAIL，并且发送IsOK消息
+			if node.Status == LinkStatus_ACTIVE {
+				now := time.Now()
+				diff := now.Sub(node.LastActive)
+				if diff > MaxLostTime && node.IsServerSide {
+					node.Status = LinkStatus_PFAIL
+					// 发送IsOk查询
+					bmsg := &pb.IsOk{
+						Id: MySelf.Id,
+					}
+					buf, _ := proto.Marshal(bmsg)
+					node.SendMsg(&pb.Message{
+						Mtype: MTypeIsOk,
+						Data:  buf,
+					})
+				}
+
+				if diff > MaxLostTime/3 && !node.IsServerSide {
+					bmsg := &pb.Ping{
+						Id: MySelf.Id,
+					}
+					buf, _ := proto.Marshal(bmsg)
+					node.SendMsg(&pb.Message{
+						Mtype: MTypePing,
+						Data:  buf,
+					})
+				}
+			}
+		}
+
+		node = next
 	}
 }

@@ -117,6 +117,17 @@ func main() {
 			common.Log.Info("作为主节点运行")
 		}
 
+		go func() {
+			ticker := time.NewTicker(time.Millisecond * 100)
+			defer ticker.Stop()
+			for {
+				select {
+				case <-ticker.C:
+					bulbasaur.NodeCron()
+				}
+			}
+		}()
+
 		ticker := time.NewTicker(time.Second * 10)
 		defer ticker.Stop()
 

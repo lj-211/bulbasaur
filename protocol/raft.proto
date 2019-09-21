@@ -36,6 +36,10 @@ message Pong {
     string id = 1;
 }
 
+message IsOk {
+    string id = 1;
+}
+
 service Ha {
     // 通用双向消息
     rpc TwoWay(stream Message) returns (stream Message);

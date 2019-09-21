@@ -13,6 +13,7 @@ const (
 	MTypeHeartBeat = iota
 	MTypePing
 	MTypePong
+	MTypeIsOk
 )
 
 type MsgProcessor func(context.Context, *Link, *pb.Message) error

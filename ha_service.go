@@ -53,7 +53,7 @@ func PingProc(ctx context.Context, lk *Link, msg *pb.Message) error {
 		return errors.Wrapf(err, "解码消息出错")
 	}
 
-	common.Log.Infof("伙伴发来心跳消息")
+	common.Log.Infof("伙伴%s发来心跳消息", ping.Id)
 
 	if lk.Status == LinkStatus_SHAKEHAND {
 		lk.Status = LinkStatus_ACTIVE
@@ -96,7 +96,26 @@ func PongProc(ctx context.Context, lk *Link, msg *pb.Message) error {
 	return nil
 }
 
+func IsOkProc(ctx context.Context, lk *Link, msg *pb.Message) error {
+	if lk == nil {
+		return errors.New("连接为空")
+	}
+	if msg == nil {
+		return errors.New("消息为空")
+	}
+
+	ok := &pb.IsOk{}
+	if err := proto.Unmarshal(msg.Data, ok); err != nil {
+		return errors.Wrapf(err, "解码消息出错")
+	}
+
+	NodeOk(ok.Id)
+
+	return nil
+}
+
 func init() {
 	registerMsgProcess(MTypePing, PingProc)
 	registerMsgProcess(MTypePong, PongProc)
+	registerMsgProcess(MTypeIsOk, IsOkProc)
 }
